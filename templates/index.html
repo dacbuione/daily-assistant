@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trợ Lý Ảo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #chatbox {
+            width: 98%;
+            height: 650px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .user-message, .assistant-message {
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .assistant-message {
+            text-align: left;
+            color: blue;
+        }
+
+        #messageInput {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        #sendBtn {
+            padding: 10px 20px;
+        }
+
+        /* Style cho popup */
+        .popup {
+            display: {{ 'block' if show_popup else 'none' }};
+            position: fixed;
+            width: 100%;
+            margin-left: 30%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 500px;
+        }
+
+        .popup-content input,
+        .popup-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+        }
+
+        .popup-content button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chào mừng đến với Trợ Lý Ảo của bạn</h1>
+    <img src="{{ url_for('static', filename='avatar.png') }}" alt="Avatar" style="width:100px;height:100px;">
+    
+    <!-- Popup nhập thông tin -->
+    <div class="popup">
+        <div class="popup-content">
+            <h2>Vui lòng cung cấp thông tin để bắt đầu:</h2>
+            <form method="POST" action="/submit_info">
+                <label for="weight">Tên của bạn:</label><br>
+                <input type="number" id="weight" name="weight" required><br><br>
+
+                <label for="weight">Cân nặng (kg):</label><br>
+                <input type="number" id="weight" name="weight" required><br><br>
+
+                <label for="height">Chiều cao (cm):</label><br>
+                <input type="number" id="height" name="height" required><br><br>
+
+                <label for="health_goal">Mục tiêu sức khỏe:</label><br>
+                <textarea id="health_goal" name="health_goal" rows="4" required></textarea><br><br>
+
+                <button type="submit">Gửi</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="chatbox">
+        <!-- Tin nhắn sẽ được hiển thị ở đây -->
+    </div>
+
+    <input type="text" id="messageInput" placeholder="Gõ tin nhắn ở đây..." onkeypress="if(event.key === 'Enter') document.getElementById('sendBtn').click();">
+    <button id="sendBtn">Gửi</button>
+
+    <script>
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            var message = document.getElementById('messageInput').value;
+
+            if (message.trim() === '') return;
+
+            // Hiển thị tin nhắn của người dùng
+            var chatbox = document.getElementById('chatbox');
+            var userMessageDiv = document.createElement('div');
+            userMessageDiv.classList.add('user-message');
+            userMessageDiv.textContent = message;
+            chatbox.appendChild(userMessageDiv);
+
+            // Gửi yêu cầu chat đến Flask
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'message=' + encodeURIComponent(message)
+            })
+            .then(response => response.json())
+            .then(data => {
+                var assistantMessageDiv = document.createElement('div');
+                assistantMessageDiv.classList.add('assistant-message');
+                assistantMessageDiv.textContent = data.message;
+                chatbox.appendChild(assistantMessageDiv);
+
+                // Cuộn xuống cuối khi có tin nhắn mới
+                chatbox.scrollTop = chatbox.scrollHeight;
+            });
+
+            // Xóa nội dung ô nhập tin nhắn
+            document.getElementById('messageInput').value = '';
+        });
+    </script>
+</body>
+</html>
